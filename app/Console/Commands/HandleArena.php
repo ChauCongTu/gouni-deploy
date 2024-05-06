@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Arena;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Redis;
 
 class handleArena extends Command
 {
@@ -32,6 +33,7 @@ class handleArena extends Command
             if (Carbon::parse($item->start_at) <= now()) {
                 $item->status = "started";
                 $item->save();
+                Redis::publish('tick', json_encode(array('event' => 'MessagePushed', 'data' => json_encode(['status' => $item->status, 'arena' => $item]))));
             }
         });
 
@@ -41,6 +43,7 @@ class handleArena extends Command
             if ($endTime <= now()) {
                 $item->status = "completed";
                 $item->save();
+                Redis::publish('tick', json_encode(array('event' => 'MessagePushed', 'data' => json_encode(['status' => $item->status, 'arena' => $item]))));
             }
         });
     }

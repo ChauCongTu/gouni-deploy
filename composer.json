@@ -12,6 +12,7 @@
         "laravel/socialite": "^5.12",
         "laravel/tinker": "^2.9",
         "predis/predis": "2.0",
+        "pusher/pusher-php-server": "^7.2",
         "rakutentech/laravel-request-docs": "^2.35",
         "spatie/laravel-permission": "^6.4"
     },

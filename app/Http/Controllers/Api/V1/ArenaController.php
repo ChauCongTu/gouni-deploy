@@ -10,6 +10,7 @@ use App\Http\Requests\Arena\StoreArenaRequest;
 use App\Http\Requests\Arena\UpdateArenaRequest;
 use App\Http\Requests\Practice\GetResultRequest;
 use App\Models\Arena;
+use App\Models\History;
 use App\Models\Subject;
 use App\Models\User;
 use Carbon\Carbon;
@@ -198,6 +199,7 @@ class ArenaController extends Controller
         $arena->status = 'started';
         $arena->start_at = now();
         $arena->save();
+        Redis::publish('tick', json_encode(array('event' => 'MessagePushed', 'data' => json_encode(['status' => $arena->status, 'arena' => $arena]))));
 
         return Common::response(200, 'Bắt đầu thi thành công.');
     }
@@ -230,6 +232,29 @@ class ArenaController extends Controller
         $arena->save();
 
         return Common::response(200, 'Gia hạn thời gian thi thành công.');
+    }
+    public function history(int $id)
+    {
+        $user_id = Auth::id();
+        $history = History::where('model', 'App\Models\Arena')->where('foreign_id', $id)->where('user_id', $user_id)->first();
+        if ($history) {
+            $history->result = json_decode($history->result);
+            return Common::response(200, 'Lấy lịch sử thành công.', $history);
+        }
+        return Common::response(404, 'Người dùng chưa tham gia bài thi này.');
+    }
+
+    public function histories(int $id)
+    {
+        $histories = History::where('model', 'App\Models\Arena')->where('foreign_id', $id)->get();
+        foreach ($histories as $history) {
+            $history->result = json_decode($history->result);
+            $history->user = User::find($history->user_id);
+        }
+        $sortedHistories = $histories->sortByDesc(function ($history) {
+            return $history->result->total_score;
+        })->values()->all();
+        return Common::response(200, 'Lấy lịch sử thành công.', $sortedHistories);
     }
 
     public function result(int $id, GetResultRequest $request)
@@ -278,6 +303,7 @@ class ArenaController extends Controller
             Common::saveHistory($user_id, 'Arena', $id, $result, "Nộp trễ " . $result['late'] . ' phút.');
             return Common::response(200, 'Bạn đã nộp muộn ' . ($result['late']) . ' phút.', $result);
         }
+        Redis::del($user_id . '_arena_progress_' . $arena->id);
         Common::saveHistory($user_id, 'Arena', $id, $result);
         return Common::response(200, "Nộp bài thành công!", $result);
     }

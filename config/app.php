@@ -127,5 +127,6 @@ return [
 
     'providers' => ServiceProvider::defaultProviders()->merge([
         Spatie\Permission\PermissionServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
     ])->toArray(),
 ];

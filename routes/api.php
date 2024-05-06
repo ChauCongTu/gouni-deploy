@@ -127,6 +127,8 @@ Route::prefix('/v1')->group(function () {
         Route::post('/progress/set', [ArenaController::class, 'saveProgress'])->name('set')->middleware(['auth:api']);
         Route::post('/progress/get', [ArenaController::class, 'loadProgress'])->name('get')->middleware(['auth:api']);
         Route::post('/progress/del', [ArenaController::class, 'delProgress'])->name('del')->middleware(['auth:api']);
+        Route::get('/history/{id}', [ArenaController::class, 'history'])->name('history')->middleware(['auth:api']);
+        Route::get('/histories/{id}', [ArenaController::class, 'histories'])->name('histories')->middleware(['auth:api']);
     });
 
     Route::prefix('targets')->name('targets.')->group(function () {

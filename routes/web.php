@@ -5,13 +5,24 @@ use App\Models\History;
 use App\Models\Statistic;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Log;
 
 Route::get('/', function () {
     $message = 'Bạn không có quyền truy cập vào nguồn dữ liệu đã yêu cầu.';
     return Common::response(403, $message);
 });
+
+Route::get('/send-message', function () {
+    $msg = 'Hello from Laravel';
+    $data = json_decode($msg, 1);
+    Redis::publish('tick', json_encode(array('event' => 'MessagePushed', 'data' => "Hello From Server")));
+    // broadcast(new App\Events\MessagePushed($msg))->toOthers();
+    return response()->json(['message' => 'Message sent']);
+});
+
 Route::get('/response-403', function () {
     $message = 'Bạn không có quyền truy cập vào nguồn dữ liệu đã yêu cầu.';
     return Common::response(403, $message);
