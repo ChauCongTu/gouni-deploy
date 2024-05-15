@@ -23,10 +23,6 @@ Route::get('/send-message', function () {
     return response()->json(['message' => 'Message sent']);
 });
 
-Route::get("/auth", function(){
-    return response()->json(['author'=> 'NhonCQ', 'copyright' => 'no copyright', 'contact' => 'http://nhoncq.online']);
-});
-
 Route::get('/response-403', function () {
     $message = 'Bạn không có quyền truy cập vào nguồn dữ liệu đã yêu cầu.';
     return Common::response(403, $message);
