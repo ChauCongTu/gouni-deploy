@@ -113,9 +113,13 @@ class LessonController extends Controller
 
     public function detail(string $slug)
     {
-        $lesson = Lesson::where('slug', $slug)->first();
+        $lesson = Lesson::with('chapter')->where('slug', $slug)->first();
+        $lesson->view_count = $lesson->view_count + 1;
+        $lesson->save();
         $lesson['liked_list'] = $lesson->likeLists();
-
+        $lesson['subject'] = $lesson->subject();
+        $lesson['next'] = Lesson::where('chap_id', $lesson->chap_id)->where('id', '>', $lesson->id)->first();
+        $lesson['preview'] = Lesson::where('chap_id', $lesson->chap_id)->where('id', '<', $lesson->id)->latest()->first();
         if ($lesson) {
             return Common::response(200, "Lấy thông tin bài học thành công.", $lesson);
         }

@@ -23,6 +23,12 @@ class Lesson extends Model
         return $this->belongsTo(Chapter::class, 'chap_id');
     }
 
+    public function subject() {
+        $chapter = Chapter::where('id', $this->chap_id)->first();
+        $subject = Subject::where('id', $chapter->subject_id)->first();
+        return $subject;
+    }
+
     public function likeLists (){
         $userList = explode(',', $this->likes);
         $userList = User::select('name', 'username')->whereIn('id', $userList)->get();
