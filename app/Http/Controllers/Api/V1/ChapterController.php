@@ -17,11 +17,15 @@ class ChapterController extends Controller
     {
         $relationship = $request->input('getWith', []);
         $page = $request->input('page', 1);
+        $subject_id = $request->input('subject_id', null);
         $perPage = $request->input('perPage', 10);
         $sort = $request->input('sort', 'created_at');
         $order = $request->input('order', 'desc');
 
         $chapterQuery = Chapter::query();
+        if ($subject_id) {
+            $chapterQuery = $chapterQuery->where('subject_id', $subject_id);
+        }
         // dd(count($relationship));
         if (count($relationship) > 0) {
             foreach ($relationship as  $value) {

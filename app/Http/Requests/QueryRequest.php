@@ -31,7 +31,8 @@ class QueryRequest extends FormRequest
             'page' => 'nullable|numeric',
             'perPage' => 'nullable|numeric',
             'sort' => 'nullable',
-            'order' => 'nullable'
+            'order' => 'nullable',
+            'chapter' => 'nullable'
         ];
     }
 

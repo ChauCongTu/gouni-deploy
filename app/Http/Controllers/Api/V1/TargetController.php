@@ -6,6 +6,7 @@ use App\Helpers\Common;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTargetRequest;
 use App\Http\Requests\UpdateTargetRequest;
+use App\Models\History;
 use Illuminate\Http\Request;
 use App\Models\UserTarget;
 use Carbon\Carbon;
@@ -90,6 +91,39 @@ class TargetController extends Controller
 
         if ($target) {
             return Common::response(200, "Lấy danh sách target thành công.", $target);
+        }
+        return Common::response(404, "Không tìm thấy target.");
+    }
+
+    public function reality($date = null)
+    {
+        $date = $date ?? Carbon::today()->toDateString();
+
+        $data = [];
+        $data['total_exams'] = History::where('user_id', Auth::id())->where('model', 'App\Models\Exam')->where('created_at', 'LIKE', $date . '%')->count();
+        $data['total_practices'] = History::where('user_id', Auth::id())->where('model', 'App\Models\Practice')->where('created_at', 'LIKE', $date . '%')->count();
+        $data['total_arenas'] = History::where('user_id', Auth::id())->where('model', 'App\Models\Arena')->where('created_at', 'LIKE', $date . '%')->count();
+        $data['min_score'] = 0;
+        $data['accuracy'] = 0;
+        $histories = History::where('user_id', Auth::id())->where('created_at', 'LIKE', $date . '%')->get();
+        if ($histories->count() > 0) {
+            $data['min_score'] = 10;
+            $data['accuracy'] = 0;
+            foreach ($histories as $history) {
+                $history['result'] = json_decode($history['result']);
+                if (is_array($history['result'])) {
+                    if ($history['result']['total_score'] < $data['min_score']) {
+                        $data['min_score'] = $history['result']['total_score'];
+                    }
+                    $accuracy = $history['result']['correct_count'] / count($history['result']['assignment']) * 100;
+                    $data['accuracy'] += $accuracy;
+                }
+            }
+            $data['accuracy'] = $data['accuracy'] / $histories->count();
+        }
+
+        if ($data) {
+            return Common::response(200, "Lấy danh sách target thành công.", $data);
         }
         return Common::response(404, "Không tìm thấy target.");
     }

@@ -135,6 +135,7 @@ Route::prefix('/v1')->group(function () {
         Route::get('/check', [TargetController::class, 'firstOfDay'])->name('check')->middleware(['auth:api']);
         Route::get('/', [TargetController::class, 'index'])->name('index')->middleware(['auth:api']);
         Route::get('/{date?}', [TargetController::class, 'detail'])->name('detail')->middleware(['auth:api']);
+        Route::get('/reality/{date?}', [TargetController::class, 'reality'])->name('reality')->middleware(['auth:api']);
         Route::post('/', [TargetController::class, 'store'])->name('store')->middleware(['auth:api']);
         Route::put('/{id}', [TargetController::class, 'update'])->name('update')->middleware(['auth:api']);
         Route::delete('/{id}', [TargetController::class, 'destroy'])->name('destroy')->middleware(['auth:api']);

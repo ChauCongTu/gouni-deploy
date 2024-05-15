@@ -25,7 +25,7 @@ class QueryRequest extends FormRequest
     {
         return [
             'getWith' => 'nullable|array',
-            'getWith.*' => 'in:questions,lessons,subject',
+            'getWith.*' => 'in:questions,lessons,subject,exams,practices',
             'page' => 'nullable|numeric',
             'perPage' => 'nullable|numeric',
             'sort' => 'nullable',

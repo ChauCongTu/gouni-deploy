@@ -27,12 +27,20 @@ class ExamController extends Controller
         $perPage = $request->input('perPage', 0);
         $sort = $request->input('sort', 'created_at');
         $order = $request->input('order', 'desc');
+        // = 0 lấy ra những thằng ko có chapter
+        $chapter = $request->input('chapter', null);
 
         $query = Exam::query();
         if ($filterBy && $value) {
             $query->where($filterBy, $condition ?? '=', $value);
         }
-
+        if ($chapter) {
+            if ($chapter == 0) {
+                $query = $query->where('chapter_id', NULL);
+            } else {
+                $query = $query->where('chapter_id', $chapter);
+            }
+        }
         if (!empty($with)) {
             $query->with($with);
         }
