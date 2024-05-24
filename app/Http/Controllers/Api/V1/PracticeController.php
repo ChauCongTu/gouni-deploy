@@ -10,6 +10,7 @@ use App\Http\Requests\Practice\StorePracticeRequest;
 use App\Http\Requests\Practice\UpdatePracticeRequest;
 use App\Models\History;
 use App\Models\Practice;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -96,6 +97,16 @@ class PracticeController extends Controller
         $practice = Practice::where('slug', $slug)->first();
         if ($practice) {
             $practice['question_list'] = $practice->questions();
+            $histories = History::where('model', 'App\Models\Practice')->where('foreign_id', $practice->id)->get();
+            foreach ($histories as $history) {
+                $history->result = json_decode($history->result);
+                $history->user = User::find($history->user_id);
+            }
+            $sortedHistories = $histories->sortByDesc(function ($history) {
+                return $history->result->total_score;
+            })->values()->all();
+
+            $practice->histories = $sortedHistories;
             return Common::response(200, "Lấy thông tin bài tập thành công.", $practice);
         }
         return Common::response(404, "Không tìm thấy bài tập này.");

@@ -99,6 +99,14 @@ class TopicController extends Controller
     {
         $topic = Topic::with('comments')->where('slug', $slug)->first();
         if ($topic) {
+            $topic->author = User::find($topic->author);
+            $comments = $topic->comments;
+            foreach ($comments as $value) {
+                $userList = explode(',', $value->likes);
+                $userList = User::select('name', 'username')->whereIn('id', $userList)->get();
+                $value['liked_list'] = $userList;
+                $value['author'] = User::find($value->author);
+            }
             return Common::response(200, "Lấy thông tin chủ đề thành công.", $topic);
         }
 

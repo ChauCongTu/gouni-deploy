@@ -9,6 +9,7 @@ use App\Http\Requests\QueryRequest;
 use App\Http\Requests\Question\StoreQuestionRequest;
 use App\Http\Requests\Question\UpdateQuestionRequest;
 use App\Models\Question;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -24,6 +25,7 @@ class QuestionController extends Controller
         $perPage = $request->input('perPage', 0);
         $sort = $request->input('sort', 'created_at');
         $order = $request->input('order', 'desc');
+        $q = $request->input('q', null);
 
         $query = Question::query();
         if ($filterBy && $value) {
@@ -34,9 +36,20 @@ class QuestionController extends Controller
             $query->with($with);
         }
 
+        if (!empty($q)) {
+            $query->where(function ($subQuery) use ($q) {
+                $subQuery->where('id', $q)
+                         ->orWhere('question', 'LIKE', '%' . $q . '%');
+            });
+        }
+
+
         $query->orderBy($sort, $order);
         $questions = $perPage == 0 ? $query->get() : $query->paginate($perPage, ['*'], 'page', $page);
-
+        foreach ($questions as $value) {
+            $value['subject'] = Subject::find($value['subject_id']);
+            $value['chapter'] = Subject::find($value['chapter_id']);
+        }
         return Common::response(200, 'Lấy danh sách câu hỏi thành công', $questions);
     }
 

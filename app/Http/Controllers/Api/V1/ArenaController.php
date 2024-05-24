@@ -131,6 +131,10 @@ class ArenaController extends Controller
                 return Common::response(400, 'Phòng thi đã hết thời gian có thể tham gia.');
             }
 
+            if ($this->conflictTime($id, $user_id)) {
+                return Common::response(400, 'Bạn đã tham gia một phòng thi khác cùng giờ.');
+            }
+
             if ($this->is_joined($id, $user_id)) {
                 return Common::response(400, 'Bạn đã tham gia phòng thi này trước đó.');
             }
@@ -257,6 +261,42 @@ class ArenaController extends Controller
         return Common::response(200, 'Lấy lịch sử thành công.', $sortedHistories);
     }
 
+
+    public static function conflictTime(int $id, int $userId)
+    {
+        $arena = Arena::find($id);
+
+        if (!$arena) {
+            return response()->json(['error' => 'Arena not found'], 404);
+        }
+
+        $startAt = Carbon::createFromFormat('Y-m-d H:i:s', $arena->start_at);
+        $endAt = $startAt->copy()->addMinutes($arena->time);
+
+        $arenas = Arena::where('id', '!=', $id)->get();
+
+        $filteredArenas = $arenas->filter(function ($arena) use ($userId) {
+            $users = explode(',', $arena->users);
+            return in_array($userId, $users);
+        });
+        foreach ($filteredArenas as $filteredArena) {
+            $filteredStartAt = Carbon::createFromFormat('Y-m-d H:i:s', $filteredArena->start_at);
+            $filteredEndAt = $filteredStartAt->copy()->addMinutes($filteredArena->time);
+
+            if (
+                ($startAt->between($filteredStartAt, $filteredEndAt)) ||
+                ($endAt->between($filteredStartAt, $filteredEndAt)) ||
+                ($filteredStartAt->between($startAt, $endAt)) ||
+                ($filteredEndAt->between($startAt, $endAt))
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
     public function result(int $id, GetResultRequest $request)
     {
         $result = [];
@@ -304,8 +344,24 @@ class ArenaController extends Controller
             return Common::response(200, 'Bạn đã nộp muộn ' . ($result['late']) . ' phút.', $result);
         }
         Redis::del($user_id . '_arena_progress_' . $arena->id);
-        Common::saveHistory($user_id, 'Arena', $id, $result);
+        $history = Common::saveHistory($user_id, 'Arena', $id, $result);
+        $histories = History::where('model', 'App\Models\Arena')->where('foreign_id', $arena->id)->get();
+        foreach ($histories as $value) {
+            $value['user'] = User::find($value['user_id']);
+            $value['result'] = json_decode($value['result']);
+        }
+        Redis::publish('tick', json_encode(array('event' => 'MessagePushed', 'data' => json_encode(['message' => 'Nộp bài thành công.', 'user' => Auth::user(), 'id' => $arena->id, 'histories' => $histories]))));
         return Common::response(200, "Nộp bài thành công!", $result);
+    }
+
+    public function getHistories($arena_id)
+    {
+        $histories = History::where('model', 'App\Models\Arena')->where('foreign_id', $arena_id)->get();
+        foreach ($histories as $value) {
+            $value['user'] = User::find($value['user_id']);
+            $value['result'] = json_decode($value['result']);
+        }
+        return Common::response(200, "Nộp bài thành công!", $histories);
     }
 
     public function saveProgress(ProgressRequest $request)

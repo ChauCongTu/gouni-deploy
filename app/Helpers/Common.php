@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\History;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 
@@ -65,7 +66,7 @@ class Common
      * @param string|null $note Ghi chú
      * @return bool Trả về true nếu lưu thành công, ngược lại trả về false.
      */
-    public static function saveHistory(int $user_id, string $model, int $foreignKey, $result, ?string $note = null): bool
+    public static function saveHistory(int $user_id, string $model, int $foreignKey, $result, ?string $note = null): History
     {
         if ($result instanceof Collection) {
             $result = $result->toArray();
@@ -81,8 +82,10 @@ class Common
             'result' => $result,
             'note' => $note
         ]);
+        $history['user'] = User::find($history['user_id']);
+        $history['result'] = json_decode($history['result']);
 
-        return (bool)$history;
+        return $history;
     }
 
     /**

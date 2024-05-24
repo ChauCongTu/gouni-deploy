@@ -129,6 +129,7 @@ Route::prefix('/v1')->group(function () {
         Route::post('/progress/del', [ArenaController::class, 'delProgress'])->name('del')->middleware(['auth:api']);
         Route::get('/history/{id}', [ArenaController::class, 'history'])->name('history')->middleware(['auth:api']);
         Route::get('/histories/{id}', [ArenaController::class, 'histories'])->name('histories')->middleware(['auth:api']);
+        Route::post('/check-conflict/{id}', [ArenaController::class, 'conflictTime'])->name('conflict')->middleware(['auth:api']);
     });
 
     Route::prefix('targets')->name('targets.')->group(function () {
