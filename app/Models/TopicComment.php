@@ -25,4 +25,10 @@ class TopicComment extends Model
     {
         return $this->belongsTo(Topic::class);
     }
+    public function likeLists()
+    {
+        $userList = explode(',', $this->likes);
+        $userList = User::select('name', 'username')->whereIn('id', $userList)->get();
+        return $userList;
+    }
 }

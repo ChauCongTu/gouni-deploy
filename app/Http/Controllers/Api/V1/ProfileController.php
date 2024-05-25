@@ -83,6 +83,7 @@ class ProfileController extends Controller
         $user = User::where('username', $username)->first();
         $user['test_class'] = explode(',', $user['test_class']);
         if ($user) {
+            $user['role'] = $user->getRoleNames();
             return Common::response(200, 'Lấy thông tin người dùng thành công.', $user);
         }
         return Common::response(404, 'Không tìm thấy người dùng có username là ' . $username);

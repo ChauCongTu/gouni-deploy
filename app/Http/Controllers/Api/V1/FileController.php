@@ -46,4 +46,45 @@ class FileController extends Controller
 
         return Common::response(400, 'No file uploaded');
     }
+
+    public function uploadImage(Request $request)
+    {
+        $folder = $request->input('folder', 'uploads'); // Nếu không có thì mặc định là 'uploads'
+
+        if ($request->hasFile('upload')) {
+            $file = $request->file('upload');
+
+            // Kiểm tra kích thước file
+            if ($file->getSize() > 5 * 1024 * 1024) { // 5 MB
+                return Common::response(400, 'File size exceeds the maximum allowed size of 5MB');
+            }
+
+            if (!$file->isValid()) {
+                return Common::response(400, 'Invalid file');
+            }
+
+            // Tạo tên file mới bằng cách thêm timestamp vào tên gốc
+            $filename = time() . '_' . $file->getClientOriginalName();
+
+            // Lưu file vào thư mục public với tên mới
+            $path = $file->storeAs('public/' . $folder, $filename);
+
+            $fullUrl = Config::get('app.url') . Storage::url($path);
+
+            // return Common::response(200, 'File uploaded successfully', ['url' => $fullUrl]);
+            return response()->json([
+                "resourceType" => "Files",
+                "currentFolder" => [
+                    "path" => "/",
+                    "url" => $fullUrl,
+                    "acl" => 255
+                ],
+                "fileName" => "fileName.jpg",
+                "uploaded" => 1,
+                "url" => $fullUrl
+            ]);
+        }
+
+        return Common::response(400, 'No file uploaded');
+    }
 }

@@ -38,10 +38,12 @@ Route::get('/demo', function () {
 Route::prefix('/v1')->group(function () {
 
     Route::get('/my-profile', function () {
+        $user = User::find(Auth::id());
+        $user['role'] = $user->getRoleNames();
         return Common::response(
             200,
             'Lấy thông tin người dùng thành công.',
-            Auth::user()
+            $user
         );
     })->middleware('auth:api');
     // Auth Routing
@@ -164,8 +166,9 @@ Route::prefix('/v1')->group(function () {
         Route::post('/', [TopicController::class, 'postComment'])->middleware('auth:api')->name('store');
         Route::put('/{id}', [TopicController::class, 'updateComment'])->middleware('auth:api')->name('update');
         Route::delete('/{id}', [TopicController::class, 'destroyComment'])->middleware('auth:api')->name('destroy');
-        Route::post('/{id}/like', [TopicController::class, 'likeComment'])->name('like');
+        Route::post('/{id}/like', [TopicController::class, 'likeComment'])->name('like')->middleware('auth:api');
     });
 
     Route::post('upload', [FileController::class, 'upload'])->name('upload')->middleware('auth:api');
+    Route::post('upload-image', [FileController::class, 'uploadImage'])->name('upload.image');
 })->name('api_v1.');

@@ -75,11 +75,23 @@ class TopicController extends Controller
 
         $topicData = $request->validated();
 
-        if (isset($topicData['name'])) {
+        if (isset($topicData['title'])) {
             $topicData['slug'] = Str::slug($topicData['title']);
         }
 
         $topic->update($topicData);
+
+        $topic = Topic::with('comments')->where('id', $id)->first();
+        if ($topic) {
+            $topic->author = User::find($topic->author);
+            $comments = $topic->comments;
+            foreach ($comments as $value) {
+                $userList = explode(',', $value->likes);
+                $userList = User::select('name', 'username')->whereIn('id', $userList)->get();
+                $value['liked_list'] = $userList;
+                $value['author'] = User::find($value->author);
+            }
+        }
 
         return Common::response(200, "Cập nhật chủ đề thành công", $topic);
     }
@@ -136,6 +148,8 @@ class TopicController extends Controller
         $newComment = TopicComment::create($comment);
 
         if ($newComment) {
+            $newComment->author = User::find($newComment->author);
+            $newComment['liked_list'] = [];
             return Common::response(200, "Bình luận thành công.", $newComment);
         }
         return Common::response(400, "Bình luận không thành công.");
@@ -157,8 +171,8 @@ class TopicController extends Controller
     public function destroyComment(int $id)
     {
         try {
-            $comment = TopicComment::findOrFail($id);
-            $comment->delete();
+            $comment = TopicComment::destroy($id);
+            // $comment->delete();
         } catch (\Exception $e) {
             return Common::response(400, "Có lỗi xảy ra, vui lòng thử lại.");
         }
@@ -168,29 +182,21 @@ class TopicController extends Controller
 
     public function likeComment(int $topic_id, int $id)
     {
-        $comment = TopicComment::findOrFail($id);
-        $user_id = auth()->user()->id;
-
-        if (empty($comment->likes)) {
-            $liked_users = [];
-        } else {
-            $liked_users = explode(',', $comment->likes);
+        $user_id = Auth::id();
+        $comment = TopicComment::find($id);
+        if ($comment) {
+            $likeList = explode(',', $comment->likes);
+            if (in_array($user_id, $likeList)) {
+                $likeList = array_diff($likeList, array((string)$user_id));
+                $comment->likes = implode(',', $likeList);
+                $comment->save();
+                return Common::response(200, "Bỏ thích bài viết thành công.", $comment->likeLists(), null, 'like', false);
+            }
+            $likeList[] = $user_id;
+            $comment->likes = implode(',', $likeList);
+            $comment->save();
+            return Common::response(200, "Thích bài viết thành công.", $comment->likeLists(), null, 'like', true);
         }
-
-        $index = array_search($user_id, $liked_users);
-        if ($index !== false) {
-
-            array_splice($liked_users, $index, 1);
-            $action = 'dislike';
-        } else {
-
-            $liked_users[] = $user_id;
-            $action = 'like';
-        }
-
-        $comment->likes = implode(',', $liked_users);
-        $comment->save();
-
-        return Common::response(200, "Thành công!", ['action' => $action, 'comment' => $comment]);
+        return Common::response(404, "Có lỗi xảy ra, vui lòng thử lại.");
     }
 }
